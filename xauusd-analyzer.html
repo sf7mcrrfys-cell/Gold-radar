@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>GOLD RADAR · XAUUSD Chart Analyzer</title>
+<style>
+:root{--bg:#07070b;--card:#12121a;--line:#2a2a38;--tx:#f4efe2;--mut:#8d8a9a;--gold:#ffc93c;--gold2:#ff9d00;--buy:#19e68c;--sell:#ff4d6a;--warn:#ff9d00;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#fbf7ec;--card:#fff;--line:#e6dcc0;--tx:#241d08;--mut:#7b7358;--gold:#d99a00;--gold2:#b87400;--buy:#0a9d62;--sell:#d6304d;color-scheme:light}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(600px 400px at 85% -5%,rgba(255,201,60,.18),transparent 60%),radial-gradient(500px 400px at -10% 40%,rgba(255,77,106,.08),transparent 60%);pointer-events:none;z-index:0}
+.wrap{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:18px 16px 60px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.logo{font-weight:900;letter-spacing:.14em;font-size:15px;display:flex;align-items:center;gap:8px}
+.coin{width:26px;height:26px;border-radius:50%;background:conic-gradient(from 0deg,var(--gold),var(--gold2),#fff3b0,var(--gold));animation:spin 6s linear infinite;box-shadow:0 0 18px rgba(255,201,60,.6)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.clock{font:600 12px ui-monospace,Menlo,monospace;color:var(--mut);text-align:right}
+.clock b{color:var(--gold)}
+h1{font-size:clamp(34px,9vw,56px);line-height:.95;margin:26px 0 8px;font-weight:900;letter-spacing:-.03em}
+h1 span{background:linear-gradient(100deg,#fff3b0,var(--gold),var(--gold2),#fff3b0);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 4s linear infinite}
+@keyframes shine{to{background-position:-250% 0}}
+.sub{color:var(--mut);margin:0 0 20px;font-size:15px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:14px}
+.lbl{font:700 11px ui-monospace,Menlo,monospace;letter-spacing:.16em;color:var(--mut);text-transform:uppercase;margin-bottom:10px}
+.drop{position:relative;border:2px dashed var(--gold2);border-radius:16px;min-height:190px;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;overflow:hidden;background:rgba(255,201,60,.04);transition:.2s}
+.drop.over{background:rgba(255,201,60,.14);transform:scale(1.01)}
+.drop input{display:none}
+.drop img{width:100%;display:block;max-height:420px;object-fit:contain;background:#000}
+.hint{padding:20px;color:var(--mut)}
+.hint big{display:block;font-size:44px;margin-bottom:6px}
+.scan{position:absolute;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);box-shadow:0 0 22px 6px rgba(255,201,60,.55);top:0;display:none;animation:scan 1.6s ease-in-out infinite}
+.drop.busy .scan{display:block}
+@keyframes scan{0%,100%{top:0}50%{top:calc(100% - 3px)}}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:transparent;color:var(--tx);padding:9px 14px;border-radius:999px;font-size:13px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--gold);color:#1a1300;border-color:var(--gold)}
+.chip.hot.on{background:var(--sell);border-color:var(--sell);color:#fff}
+.chip.mid.on{background:var(--warn);border-color:var(--warn)}
+select,input[type=text]{width:100%;background:transparent;color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:11px;font-size:14px;margin-top:10px}
+.go{width:100%;border:0;border-radius:16px;padding:17px;font-size:17px;font-weight:900;letter-spacing:.08em;color:#1a1300;background:linear-gradient(100deg,var(--gold),var(--gold2));cursor:pointer;box-shadow:0 8px 30px rgba(255,157,0,.35)}
+.go:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.err{color:var(--sell);font-size:14px;margin-top:10px;display:none}
+#res{display:none}
+.verdict{text-align:center;padding:26px 10px;border-radius:20px;margin-bottom:14px;border:1px solid}
+.verdict.buy{border-color:var(--buy);background:linear-gradient(180deg,rgba(25,230,140,.16),transparent)}
+.verdict.sell{border-color:var(--sell);background:linear-gradient(180deg,rgba(255,77,106,.16),transparent)}
+.verdict.wait{border-color:var(--warn);background:linear-gradient(180deg,rgba(255,157,0,.14),transparent)}
+.vt{font-size:clamp(54px,16vw,96px);font-weight:900;letter-spacing:-.02em;line-height:1}
+.buy .vt{color:var(--buy);text-shadow:0 0 40px rgba(25,230,140,.5)}
+.sell .vt{color:var(--sell);text-shadow:0 0 40px rgba(255,77,106,.5)}
+.wait .vt{color:var(--warn)}
+.vs{color:var(--mut);margin-top:6px;font-size:14px}
+.meter{height:8px;border-radius:99px;background:var(--line);margin:16px auto 0;max-width:280px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold2),var(--gold));transition:width 1s}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.lv{border:1px solid var(--line);border-radius:14px;padding:12px}
+.lv small{display:block;font:700 10px ui-monospace,Menlo,monospace;letter-spacing:.14em;color:var(--mut)}
+.lv b{font:800 21px ui-monospace,Menlo,monospace}
+.lv.sl b{color:var(--sell)}.lv.tp b{color:var(--buy)}.lv.en b{color:var(--gold)}
+.ladder{position:relative;height:250px;margin:6px 4px}
+.ladder::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--line)}
+.rung{position:absolute;left:0;right:0;display:flex;align-items:center;justify-content:space-between;font:700 12px ui-monospace,Menlo,monospace;transform:translateY(-50%)}
+.rung::after{content:"";position:absolute;left:12%;right:12%;top:50%;border-top:2px dashed currentColor;opacity:.45;z-index:0}
+.rung span{background:var(--card);padding:2px 8px;border-radius:8px;z-index:1}
+.news{border-radius:14px;padding:14px;border:1px solid var(--warn);background:rgba(255,157,0,.09);font-size:14px;line-height:1.5}
+ul{margin:6px 0 0;padding-left:20px;line-height:1.6;font-size:14px}
+.dis{color:var(--mut);font-size:11px;text-align:center;margin-top:22px;line-height:1.5}
+.pill{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;font:900 13px ui-monospace,Menlo,monospace;letter-spacing:.1em;border:1px solid}
+.pill::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25;transform:scale(.7)}}
+.pill.open{color:var(--buy);border-color:var(--buy);background:rgba(25,230,140,.1)}
+.pill.closed{color:var(--sell);border-color:var(--sell);background:rgba(255,77,106,.1)}
+.pill.brk{color:var(--warn);border-color:var(--warn);background:rgba(255,157,0,.1)}
+.mkhead{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.mkt{font-size:20px;font-weight:800}
+.mks{color:var(--mut);font-size:12px;line-height:1.5}
+.tlw{position:relative;margin:16px 0 8px}
+.tlr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.tlr span{width:118px;font-size:12px;font-weight:700;line-height:1.2}
+.tlr span small{display:block;color:var(--mut);font:500 10px ui-monospace,Menlo,monospace}
+.tlb{position:relative;flex:1;height:14px;border-radius:7px;background:var(--line);overflow:hidden}
+.tlb i{position:absolute;top:0;bottom:0;opacity:.9}
+.tlm{position:absolute;top:-4px;bottom:16px;width:2px;background:#fff;box-shadow:0 0 10px #fff;border-radius:2px;pointer-events:none}
+.tls{display:flex;justify-content:space-between;margin-left:126px;font:10px ui-monospace,Menlo,monospace;color:var(--mut)}
+.evrow{display:flex;gap:12px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:14px;margin-bottom:8px;cursor:pointer}
+.evrow.next{border-color:var(--sell);background:rgba(255,77,106,.08)}
+.evd{min-width:58px;text-align:center;font:800 11px ui-monospace,Menlo,monospace;line-height:1.3;color:var(--gold)}
+.evd b{display:block;font-size:22px;color:var(--tx)}
+.evi{flex:1;min-width:0}
+.evi b{font-size:14px}
+.evi div{font-size:12px;color:var(--mut);line-height:1.4;margin-top:2px}
+.bd{font:800 10px ui-monospace,Menlo,monospace;padding:3px 8px;border-radius:99px;letter-spacing:.08em;white-space:nowrap}
+.bd.high{background:var(--sell);color:#fff}.bd.med{background:var(--warn);color:#1a1300}.bd.info{background:var(--line);color:var(--tx)}
+.cd{font:700 11px ui-monospace,Menlo,monospace;color:var(--gold);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo"><div class="coin"></div>GOLD RADAR</div>
+    <div class="clock"><b id="sess">--</b><br><span id="utc">--</span></div>
+  </div>
+  <h1>Drop the chart.<br><span>Get the call.</span></h1>
+  <p class="sub">Upload an XAUUSD screenshot. Get BUY or SELL, entry, stop loss and take profits, adjusted for news risk.</p>
+
+  <div class="news" id="alert" style="display:none;margin-bottom:14px"></div>
+
+  <div class="card">
+    <div class="lbl">Gold market status</div>
+    <div class="mkhead"><span class="pill" id="pill">--</span><div><div class="mkt" id="mkt"></div><div class="mks" id="mks"></div></div></div>
+    <div class="tlw" id="tl"></div>
+    <div class="tls"><span>0</span><span>6</span><span>12</span><span>18</span><span>24 UTC</span></div>
+    <div class="mks" id="tip" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">🔥 High-impact news calendar</div>
+    <div id="evl"></div>
+    <div class="mks" style="margin-top:10px">Tap an event to load it into the analyzer. Times are in your local time. Dates come from the official BLS and Federal Reserve calendars, and schedules can change, so double-check in release week.</div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">1 · Chart screenshot</div>
+    <label class="drop" id="drop">
+      <input type="file" id="file" accept="image/*">
+      <div class="hint" id="hint"><big>📈</big>Tap to upload or drag a chart here</div>
+      <img id="prev" alt="" style="display:none">
+      <div class="scan"></div>
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="lbl">2 · News risk right now</div>
+    <div class="row" id="news">
+      <button class="chip on" data-v="none">No news</button>
+      <button class="chip mid" data-v="medium">Medium news</button>
+      <button class="chip hot" data-v="high">🔥 High impact (NFP / CPI / FOMC)</button>
+    </div>
+    <input type="text" id="ev" placeholder="Which event & when? e.g. US CPI in 20 min (optional)">
+    <select id="style">
+      <option value="scalp">Scalp (M1–M15)</option>
+      <option value="day" selected>Intraday (M30–H4)</option>
+      <option value="swing">Swing (H4–D1)</option>
+    </select>
+  </div>
+
+  <button class="go" id="go" disabled>ANALYZE CHART</button>
+  <div class="err" id="err"></div>
+
+  <div id="res" style="margin-top:18px">
+    <div class="verdict" id="verdict"><div class="vt" id="vt"></div><div class="vs" id="vs"></div>
+      <div class="meter"><i id="conf"></i></div><div class="vs" id="cl"></div></div>
+    <div class="card" id="newsCard" style="display:none"><div class="lbl">⚠ News warning</div><div class="news" id="nw"></div></div>
+    <div class="card"><div class="lbl">Trade plan</div>
+      <div class="grid" id="lv"></div></div>
+    <div class="card"><div class="lbl">Level map</div><div class="ladder" id="ladder"></div></div>
+    <div class="card"><div class="lbl">Why</div><ul id="why"></ul>
+      <div class="lbl" style="margin-top:14px">Invalidation</div><div id="inv" style="font-size:14px;line-height:1.5"></div></div>
+  </div>
+  <div class="dis">AI reads of screenshots can be wrong. Prices come from the chart axis, so double-check them. Not financial advice. Risk only what you can lose.</div>
+</div>
+
+<script>
+var file=null,newsV="none",sample=null;
+var $=function(i){return document.getElementById(i)};
+function tick(){var d=new Date(),h=d.getUTCHours(),s="Asia session";
+ if(h>=7&&h<12)s="London session";else if(h>=12&&h<16)s="London + NY overlap 🔥";else if(h>=16&&h<21)s="New York session";
+ $("sess").textContent=s;$("utc").textContent=d.toUTCString().slice(17,25)+" UTC"}
+tick();setInterval(tick,1000);
+var EVS=[
+["2026-11-10T13:30:00Z","US CPI (October)","high","Inflation print. Hotter than expected = USD up, gold dumps. Cooler = gold squeezes up."],
+["2026-11-13T13:30:00Z","US PPI (October)","med","Producer prices. Smaller mover than CPI but can still spike gold."],
+["2026-11-26T14:30:00Z","US Thanksgiving","info","US closed. Thin liquidity, wide spreads. Day after is a half day."],
+["2026-12-04T13:30:00Z","US NFP jobs report (November)","high","Five days before the Fed. Often the biggest gold move of the month."],
+["2026-12-09T19:00:00Z","FOMC rate decision + dot plot","high","Meeting Dec 8-9. Press conference at 19:30 UTC is a second wave, often reverses the first move."],
+["2026-12-10T13:30:00Z","US CPI (November)","high","Last CPI after the Fed. Expect a big reaction."],
+["2026-12-25T00:00:00Z","Christmas Day","info","Most brokers closed or thin. Skip trading."],
+["2027-01-01T00:00:00Z","New Year Day","info","Thin market, closed on many brokers."],
+["2027-01-08T13:30:00Z","US NFP jobs report (December)","high","First jobs report of the year."],
+["2027-01-13T13:30:00Z","US CPI (December)","high","Inflation print."]];
+function fd(ms){var s=Math.max(0,Math.floor(ms/1000)),d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);return d?d+"d "+h+"h":h?h+"h "+m+"m":m+"m"}
+function hm(d){return d.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}
+function lh(h){return hm(new Date(Date.UTC(2026,0,1,h)))}
+function stt(m){var d=Math.floor(m/1440),t=m%1440;if(m<1080||d===6||(d===5&&t>=1020))return"closed";if(d>=1&&d<=4&&t>=1020&&t<1080)return"brk";return"open"}
+function mk(){
+ var p=new Intl.DateTimeFormat("en-US",{timeZone:"America/New_York",weekday:"short",hour:"numeric",minute:"numeric",hour12:false}).formatToParts(new Date()),o={};
+ p.forEach(function(x){o[x.type]=x.value});
+ var dn={Sun:0,Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6}[o.weekday],m=dn*1440+(parseInt(o.hour,10)%24)*60+parseInt(o.minute,10),cur=stt(m),k=1;
+ while(k<10080&&stt((m+k)%10080)===cur)k++;
+ var at=new Date(Math.floor(Date.now()/60000)*60000+k*60000),nx=stt((m+k)%10080);
+ var pl=$("pill");pl.className="pill "+(cur==="open"?"open":cur==="brk"?"brk":"closed");
+ pl.textContent=cur==="open"?"OPEN":cur==="brk"?"DAILY BREAK":"CLOSED";
+ $("mkt").textContent=(nx==="open"?"Opens":"Closes")+" in "+fd(k*60000);
+ $("mks").textContent="at "+at.toLocaleDateString([],{weekday:"short"})+" "+hm(at)+" your time. Typical hours: Sun 18:00 ET to Fri 17:00 ET, daily break 17:00-18:00 ET. Your broker may differ.";
+}
+function tl(){
+ var d=new Date(),u=d.getUTCHours()+d.getUTCMinutes()/60;
+ var S=[["Asia",[[22,24],[0,8]],"#7aa7ff",22,8],["London",[[8,17]],"#ffc93c",8,17],["New York",[[13,22]],"#ff6b9a",13,22]],h="";
+ S.forEach(function(s){h+='<div class="tlr"><span>'+s[0]+'<small>'+lh(s[3])+" - "+lh(s[4])+' local</small></span><div class="tlb">'+s[1].map(function(r){return '<i style="left:'+r[0]/24*100+'%;width:'+(r[1]-r[0])/24*100+'%;background:'+s[2]+'"></i>'}).join("")+'</div></div>'});
+ h+='<div class="tlm" style="left:calc(126px + (100% - 126px) * '+(u/24)+')"></div>';
+ $("tl").innerHTML=h;
+ $("tip").textContent="Best liquidity is the London + New York overlap, 13:00-17:00 UTC ("+lh(13)+" - "+lh(17)+" your time). Winter times shown; they shift 1 hour in US and UK summer. Spreads widen at the Sunday open and late Friday.";
+}
+function evs(){
+ var now=Date.now(),h="",first=true,al="";
+ EVS.forEach(function(e,i){
+  var t=new Date(e[0]).getTime(),df=t-now;
+  if(df<-7200000)return;
+  var D=new Date(t),isn=first&&e[2]!=="info";if(isn)first=false;
+  if(e[2]==="high"&&df>-3600000&&df<5400000)al="🔥 "+e[1]+(df>0?" in "+fd(df):" just released")+". Spikes both ways are normal. Wait for the first 15-minute candle to close.";
+  h+='<div class="evrow'+(isn?" next":"")+'" data-i="'+i+'"><div class="evd">'+D.toLocaleDateString([],{month:"short"}).toUpperCase()+'<b>'+D.getDate()+'</b>'+D.toLocaleDateString([],{weekday:"short"}).toUpperCase()+'</div><div class="evi"><b>'+e[1]+'</b><div>'+(e[2]==="info"?"All day":hm(D)+" local · "+e[0].slice(11,16)+" UTC")+'</div><div>'+e[3]+'</div>'+(df>0?'<div class="cd">in '+fd(df)+'</div>':'')+'</div><span class="bd '+e[2]+'">'+(e[2]==="high"?"HIGH":e[2]==="med"?"MEDIUM":"INFO")+'</span></div>'});
+ $("evl").innerHTML=h;
+ var a=$("alert");a.style.display=al?"block":"none";a.textContent=al;
+ if(al&&newsV==="none"&&!window._auto){window._auto=1;document.querySelector('#news .chip[data-v="high"]').click()}
+}
+$("evl").onclick=function(e){var r=e.target.closest(".evrow");if(!r)return;var v=EVS[+r.dataset.i];
+ $("ev").value=v[1]+" at "+v[0].slice(11,16)+" UTC";
+ document.querySelector('#news .chip[data-v="'+(v[2]==="high"?"high":v[2]==="med"?"medium":"none")+'"]').click();
+ $("news").scrollIntoView({behavior:"smooth",block:"center"})};
+mk();tl();setTimeout(evs,0);setInterval(mk,1000);setInterval(tl,30000);setInterval(evs,15000);
+document.querySelectorAll("#news .chip").forEach(function(b){b.onclick=function(){
+ document.querySelectorAll("#news .chip").forEach(function(x){x.classList.remove("on")});
+ b.classList.add("on");newsV=b.dataset.v}});
+function load(f){if(!f||f.type.indexOf("image")!==0)return;file=f;
+ var r=new FileReader();r.onload=function(){$("prev").src=r.result;$("prev").style.display="block";$("hint").style.display="none"};
+ r.readAsDataURL(f);$("go").disabled=false}
+$("file").onchange=function(e){load(e.target.files[0])};
+var dr=$("drop");
+["dragenter","dragover"].forEach(function(t){dr.addEventListener(t,function(e){e.preventDefault();dr.classList.add("over")})});
+["dragleave","drop"].forEach(function(t){dr.addEventListener(t,function(e){e.preventDefault();dr.classList.remove("over")})});
+dr.addEventListener("drop",function(e){load(e.dataTransfer.files[0])});
+
+function fail(m){var e=$("err");e.textContent=m;e.style.display="block"}
+function f2(n){return Number(n).toFixed(2)}
+
+$("go").onclick=async function(){
+ $("err").style.display="none";
+ var btn=$("go");btn.disabled=true;btn.textContent="SCANNING…";dr.classList.add("busy");
+ try{
+  if(!sample){sample=await claude.use("sample")}
+  if(!sample){fail("AI is not available in this view. Open the page in claude.ai to use it.");return}
+  var rules={none:"No news. Normal stops.",medium:"Medium-impact news nearby. Widen SL about 25%, prefer waiting for a candle close.",high:"HIGH-IMPACT news (NFP/CPI/FOMC style). Gold can move 15 to 40 dollars in seconds with fake spikes both ways. Strongly prefer WAIT until after the release and the first 15-minute candle closes; if giving a trade, use a much wider SL, smaller size and say so."}[newsV];
+  var prompt="You are a veteran gold (XAUUSD) price-action trader. Analyze the attached chart screenshot. Read the PRICE AXIS carefully and give real numeric price levels that match it. Look at trend, structure, support/resistance, liquidity sweeps, candle patterns, and any indicators visible.\nTrading style: "+$("style").value+".\nNews context: "+rules+" "+($("ev").value||"")+"\nReply with ONLY a JSON object, no markdown, in this shape:\n{\"signal\":\"BUY\"|\"SELL\"|\"WAIT\",\"confidence\":0-100,\"summary\":\"one short line\",\"entry\":number,\"sl\":number,\"tp1\":number,\"tp2\":number,\"tp3\":number,\"rr\":\"e.g. 1:2.5\",\"reasons\":[\"3 to 5 short bullets\"],\"invalidation\":\"one sentence\",\"news_note\":\"short advice for the news risk, empty string if none\",\"size_tip\":\"short risk-size tip\"}\nIf the chart is unreadable or not gold, signal WAIT and explain in summary, with entry/sl/tps set to 0. For BUY: sl<entry<tp1<tp2<tp3. For SELL the reverse. Gold SL is normally 3 to 15 dollars on intraday.";
+  var t=await sample(prompt,{images:[file],modelTier:"complex",cache:false});
+  var m=(t.text||"").match(/\{[\s\S]*\}/);
+  if(!m)throw new Error("Could not read the answer. Try again.");
+  show(JSON.parse(m[0]));
+ }catch(e){fail(e&&e.code==="not_granted"?"Permission was declined, so the AI could not run.":(e&&e.message)||"Something went wrong. Try again.")}
+ finally{btn.disabled=false;btn.textContent="ANALYZE CHART";dr.classList.remove("busy")}
+};
+
+function show(d){
+ var s=(d.signal||"WAIT").toUpperCase(),c=s==="BUY"?"buy":s==="SELL"?"sell":"wait";
+ $("res").style.display="block";
+ $("verdict").className="verdict "+c;
+ $("vt").textContent=s==="BUY"?"BUY ▲":s==="SELL"?"SELL ▼":"WAIT ⏸";
+ $("vs").textContent=d.summary||"";
+ setTimeout(function(){$("conf").style.width=(d.confidence||0)+"%"},50);
+ $("cl").textContent="Confidence "+(d.confidence||0)+"%"+(d.rr?" · R:R "+d.rr:"");
+ var nc=$("newsCard");
+ if(newsV!=="none"||d.news_note){nc.style.display="block";
+  $("nw").textContent=(d.news_note||"News risk is on. Wait for the spike to settle.")+(d.size_tip?" Size: "+d.size_tip:"")}else nc.style.display="none";
+ var has=Number(d.entry)>0;
+ var items=has?[["ENTRY",d.entry,"en"],["STOP LOSS",d.sl,"sl"],["TP 1",d.tp1,"tp"],["TP 2",d.tp2,"tp"],["TP 3",d.tp3,"tp"]]:[];
+ $("lv").innerHTML=has?items.map(function(i){return '<div class="lv '+i[2]+'"><small>'+i[0]+'</small><b>'+f2(i[1])+'</b></div>'}).join(""):'<div style="grid-column:1/3;color:var(--mut);font-size:14px">No trade levels. Wait for a cleaner setup.</div>';
+ var L=$("ladder");L.innerHTML="";
+ if(has){var v=items.map(function(i){return Number(i[1])}),mx=Math.max.apply(null,v),mn=Math.min.apply(null,v),rg=(mx-mn)||1;
+  items.forEach(function(i){var p=(mx-Number(i[1]))/rg*88+6;
+   var col=i[2]==="sl"?"var(--sell)":i[2]==="tp"?"var(--buy)":"var(--gold)";
+   L.insertAdjacentHTML("beforeend",'<div class="rung" style="top:'+p+'%;color:'+col+'"><span>'+i[0]+'</span><span>'+f2(i[1])+'</span></div>')})}
+ $("why").innerHTML=(d.reasons||[]).map(function(r){var li=document.createElement("li");li.textContent=r;return li.outerHTML}).join("");
+ $("inv").textContent=d.invalidation||"";
+ $("res").scrollIntoView({behavior:"smooth"});
+}
+</script>
+</body>
+</html>
